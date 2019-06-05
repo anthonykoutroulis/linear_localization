@@ -10,37 +10,6 @@ import matplotlib.pyplot as plt;
 import circle_fit as cf;
 import src.farid_conv as fc;
 
-IN_MIN = 3715.88; IN_MAX = 27001.1; OUT_MIN = 5.2703794; OUT_MAX = 78.3703818;
-def rmap(x, in_min, in_max, out_min, out_max):
-    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-def get_series_out(nodes,full_readings_list,j):
-    
-    d_ = ce240.get_dist_vector(nodes,j);
-    A  = ce240.get_lmatrix(nodes,j)
-    
-    output_vector_list = [];
-    time_list = [];
-    
-    ## Iterate over sets from the full_reading_list
-    for distance_list in full_readings_list:
-    
-        # Assumed millimeters
-        rn = np.array((float(distance_list[0][3]),
-                       float(distance_list[1][3]),
-                       float(distance_list[2][3]),
-                       float(distance_list[3][3]),
-                       float(distance_list[4][3]),
-                       float(distance_list[5][3]),
-                       float(distance_list[6][3]),
-                       float(distance_list[7][3])));
-        # time reading from node 1 distance measurement
-        time_list.append(distance_list[0][0]);
-        rn = np.array([rmap(r,IN_MIN,IN_MAX,OUT_MIN,OUT_MAX) for r in rn]);
-        b_ = ce240.get_ldist_vector(rn,d_,j);
-        xls = ce240.get_xls(A,b_,scale=1);
-        output_vector_list.append(xls);
-    return output_vector_list, time_list;  
-################################################################################
 REF_J   = 5;
 xn = np.array(( -2455199.6273,
 				-2455195.5372,
@@ -69,7 +38,7 @@ zn = np.array((	3873208.9598,
 				3873198.5096,
 				3873203.5880,
 				3873207.9264));
-               
+
 zm = np.array(( 2737.456704,
                 2737.276664,
                 2737.345904,
@@ -78,7 +47,7 @@ zm = np.array(( 2737.456704,
                 2737.897384,
                 2738.013144,
                 2737.757144));
-              
+
 #create the origin
 x0 = -2455220.4875; y0 = -4425487.0204; z0 = 3873193.8678;
 xn -= x0;
@@ -96,7 +65,6 @@ d_ = ce240.get_dist_vector(nodes,REF_J);
 A  = ce240.get_lmatrix(nodes,REF_J);
 r_ = ce240.get_radii(sensor_data);
 
-xyz, t = get_series_out(nodes, sensor_data, REF_J)
 xyz, t = ce240.get_series_out(nodes, sensor_data, REF_J)
 x,y,z = np.hsplit(np.array(xyz),3);
 

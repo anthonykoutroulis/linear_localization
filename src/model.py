@@ -7,18 +7,18 @@ import matplotlib.mlab as ml;
 import src.farid_conv as fc;
 
 def get_points(xn,yn,zn,obs):
-    
+
 #    sw_corner = (37.56821,-119.07787);
 #    ne_corner = (37.65835,-118.96423);
 #    xc = sw_corner[0];
 #    yc = sw_corner[1];
 #    zc = 2735.643311532;
-    
+
        # Convert lat,lon,alt to ECEF x,y,z
     #xn,yn,zn = pm.geodetic2ecef(xn,yn,zn)
 #    print(min(xn));
     #xn,yn,zn = pm.geodetic2enu(xn,yn,zn,xc,yc,min(zn));
-    
+
     #xi = np.linspace(min(xn),max(xn));
     #yi = np.linspace(min(yn),max(yn));
     #X,Y = np.meshgrid(xi,yi);
@@ -27,7 +27,7 @@ def get_points(xn,yn,zn,obs):
     #xn,yn,zn = pm.geodetic2ned(xn,yn,zn,obs[0],obs[1],obs[2],ell=ell_clrk66, deg=True);
     nodes = [(x,y,z) for x,y,z in zip(xn,yn,zn)];
     #nodes = [(x,y,z) for x,y,z in zip(xn,yn,zn)];
-    
+
     return np.array(nodes);
 
 def get_points2D(xn,yn,obs):
@@ -36,44 +36,44 @@ def get_points2D(xn,yn,obs):
     return np.array(nodes);
 
 def get_dist(node_i, node_j):
-    return np.sqrt(np.square(node_i[0] - node_j[0]) + 
-                   np.square(node_i[1] - node_j[1]) + 
+    return np.sqrt(np.square(node_i[0] - node_j[0]) +
+                   np.square(node_i[1] - node_j[1]) +
                    np.square(node_i[2] - node_j[2]));
-                   
+
 def get_dist2D(node_i, node_j):
-    return np.sqrt(np.square(node_i[0] - node_j[0]) + 
+    return np.sqrt(np.square(node_i[0] - node_j[0]) +
                    np.square(node_i[1] - node_j[1]));
-            
+
 def get_ldist(rad_i, rad_j, dist_ij):
     return 0.5 * (np.square(rad_j) - np.square(rad_i) + np.square(dist_ij));
 
 def get_lrow_vector(node_i, node_j):
-    return np.array([node_i[0] - node_j[0], 
-                     node_i[1] - node_j[1], 
+    return np.array([node_i[0] - node_j[0],
+                     node_i[1] - node_j[1],
                      node_i[2] - node_j[2]]);
 
 def get_lrow_vector2D(node_i, node_j):
-    return np.array([node_i[0] - node_j[0], 
+    return np.array([node_i[0] - node_j[0],
                      node_i[1] - node_j[1]]);
-    
+
 def get_dist_vector(nodes,ref_j):
-    return [get_dist(node_i,nodes[ref_j]) for node_i in 
+    return [get_dist(node_i,nodes[ref_j]) for node_i in
             np.vstack((nodes[:ref_j],nodes[ref_j+1:]))];
-            
+
 def get_dist_vector2D(nodes,ref_j):
-    return [get_dist2D(node_i,nodes[ref_j]) for node_i in 
+    return [get_dist2D(node_i,nodes[ref_j]) for node_i in
             np.vstack((nodes[:ref_j],nodes[ref_j+1:]))];
 
 def get_ldist_vector(r_,d_,ref_j):
-    return [get_ldist(rad_i,r_[ref_j],d) for rad_i,d in 
+    return [get_ldist(rad_i,r_[ref_j],d) for rad_i,d in
             zip(np.hstack((r_[:ref_j],r_[ref_j+1:])),d_)];
 
 def get_lmatrix(nodes,ref_j):
-    return np.array([get_lrow_vector(node_i,nodes[ref_j]) for node_i in 
+    return np.array([get_lrow_vector(node_i,nodes[ref_j]) for node_i in
                      np.vstack((nodes[:ref_j],nodes[ref_j+1:]))]);
-        
+
 def get_lmatrix2D(nodes,ref_j):
-    return np.array([get_lrow_vector2D(node_i,nodes[ref_j]) for node_i in 
+    return np.array([get_lrow_vector2D(node_i,nodes[ref_j]) for node_i in
                      np.vstack((nodes[:ref_j],nodes[ref_j+1:]))]);
 
 def get_xls(A,b_,scale=0.000001):
@@ -85,13 +85,13 @@ def get_xls(A,b_,scale=0.000001):
 def get_series_out(nodes,full_readings_list,j):
     d_ = get_dist_vector(nodes,j);
     A = get_lmatrix(nodes,j)
-    
+
     output_vector_list = [];
     time_list = [];
-    
+
     ## Iterate over sets from the full_reading_list
     for distance_list in full_readings_list:
-    
+
         # Assumed millimeters
         rn = np.array((float(distance_list[0][3]),
                        float(distance_list[1][3]),
@@ -104,6 +104,8 @@ def get_series_out(nodes,full_readings_list,j):
         # time reading from node 1 distance measurement
         time_list.append(distance_list[0][0]);
         #rn /= 328.084;
+
+        # 750 mm offset, then convert to meters
         rn -= 750.0;
         rn /= 1000;
         b_ = get_ldist_vector(rn,d_,j);
@@ -111,19 +113,19 @@ def get_series_out(nodes,full_readings_list,j):
         #xls = optimize.least_squares(A,b_,bounds=(0,100));
         #xls,r,r,s = np.linalg.lstsq(A,b_,rcond=0;
         output_vector_list.append(xls);
-        
+
     return output_vector_list, time_list;
 
 def get_series_out2D(nodes,full_readings_list,j):
     d_ = get_dist_vector2D(nodes,j);
     A = get_lmatrix2D(nodes,j)
-    
+
     output_vector_list = [];
     time_list = [];
-    
+
     ## Iterate over sets from the full_reading_list
     for distance_list in full_readings_list:
-    
+
         # Assumed millimeters
         rn = np.array((float(distance_list[0][3]),
                        float(distance_list[1][3]),
@@ -142,14 +144,14 @@ def get_series_out2D(nodes,full_readings_list,j):
         #xls = optimize.least_squares(A,b_,bounds=(0,100));
         #xls,r,r,s = np.linalg.lstsq(A,b_,rcond=0;
         output_vector_list.append(xls);
-        
+
     return output_vector_list,time_list;
-      
+
 def get_radii(full_readings_list):
     rn_list = [];
     ## Iterate over sets from the full_reading_list
     for distance_list in full_readings_list:
-    
+
         # Assumed millimeters
         rn = np.array((float(distance_list[0][3]),
                        float(distance_list[1][3]),
