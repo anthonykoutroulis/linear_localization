@@ -6,6 +6,7 @@ from scipy import optimize;
 import matplotlib.mlab as ml;
 import src.farid_conv as fc;
 
+# WIP apply lla->xyz transformation on vector
 def get_points(xn,yn,zn,obs):
 
 #    sw_corner = (37.56821,-119.07787);
@@ -35,18 +36,22 @@ def get_points2D(xn,yn,obs):
     nodes = [(x,y) for x,y in zip(X,Y)];
     return np.array(nodes);
 
+# return euclidean distance b/w two points (x,y,z)
 def get_dist(node_i, node_j):
     return np.sqrt(np.square(node_i[0] - node_j[0]) +
                    np.square(node_i[1] - node_j[1]) +
                    np.square(node_i[2] - node_j[2]));
-
+                   
+# return euclidean distance b/w two points (x,y)
 def get_dist2D(node_i, node_j):
     return np.sqrt(np.square(node_i[0] - node_j[0]) +
                    np.square(node_i[1] - node_j[1]));
 
+# get linearized radius to target with reference j
 def get_ldist(rad_i, rad_j, dist_ij):
     return 0.5 * (np.square(rad_j) - np.square(rad_i) + np.square(dist_ij));
 
+# compute single row of matrix A, reference j
 def get_lrow_vector(node_i, node_j):
     return np.array([node_i[0] - node_j[0],
                      node_i[1] - node_j[1],
@@ -56,18 +61,21 @@ def get_lrow_vector2D(node_i, node_j):
     return np.array([node_i[0] - node_j[0],
                      node_i[1] - node_j[1]]);
 
+# get_dist for a list of nodes, excepting reference node j
 def get_dist_vector(nodes,ref_j):
     return [get_dist(node_i,nodes[ref_j]) for node_i in
             np.vstack((nodes[:ref_j],nodes[ref_j+1:]))];
-
+            
 def get_dist_vector2D(nodes,ref_j):
     return [get_dist2D(node_i,nodes[ref_j]) for node_i in
             np.vstack((nodes[:ref_j],nodes[ref_j+1:]))];
 
+# get_ldist for a list of nodes, excepting reference node j
 def get_ldist_vector(r_,d_,ref_j):
     return [get_ldist(rad_i,r_[ref_j],d) for rad_i,d in
             zip(np.hstack((r_[:ref_j],r_[ref_j+1:])),d_)];
 
+# build complete matrix A
 def get_lmatrix(nodes,ref_j):
     return np.array([get_lrow_vector(node_i,nodes[ref_j]) for node_i in
                      np.vstack((nodes[:ref_j],nodes[ref_j+1:]))]);
@@ -76,12 +84,14 @@ def get_lmatrix2D(nodes,ref_j):
     return np.array([get_lrow_vector2D(node_i,nodes[ref_j]) for node_i in
                      np.vstack((nodes[:ref_j],nodes[ref_j+1:]))]);
 
+# calculate linear least squares x, assuming A is skinny, well-behaved, etc.
 def get_xls(A,b_,scale=0.000001):
     AT = A.transpose();
     ATA = np.dot(AT,A);
     At = np.dot(np.linalg.inv(ATA),AT);
     return scale * np.dot(At,b_);
 
+# get xls vector for an entire time series of nodes, ref j
 def get_series_out(nodes,full_readings_list,j):
     d_ = get_dist_vector(nodes,j);
     A = get_lmatrix(nodes,j)
@@ -147,6 +157,7 @@ def get_series_out2D(nodes,full_readings_list,j):
 
     return output_vector_list,time_list;
 
+# parse the sensor logs for an unmodified array of distances
 def get_radii(full_readings_list):
     rn_list = [];
     ## Iterate over sets from the full_reading_list
