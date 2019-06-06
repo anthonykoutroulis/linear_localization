@@ -218,11 +218,31 @@ def get_isensor_logs():
     print("Num good sets: " + str(len(full_readings_list)));
     return full_readings_list;
 
-def get_clean_log(file):
-    import numpy as np;
-    import pandas as pd;
+def get_node_locs():
+    # constants
+    LAT_COL = 1;
+    LON_COL = 2;
+    ALT_COL = 3;
+    
+    # variables
+    lat_list = [];
+    lon_list = [];
+    alt_list = [];
+    
+    data_file = os.getcwd() + "/data/nod_locs.csv"
+    
+    # cycle through all sensor data files
+    file = open(data_file, 'r');
+    reader = csv.reader(file);
+    
+    # skip header, TODO add sniffer
+    next(reader);
 
-    dirtylog = pd.read_csv(file, sep=',', usecols=[0,2,3],
-                           names=['time','node','dist'],
-                           parse_dates={'time':['Date', 'Time']})
+    for row in reader:
+        print(row);
+        lat_list.append(float(row[LAT_COL]));
+        lon_list.append(float(row[LON_COL]));
+        alt_list.append(float(row[ALT_COL]));
 
+    file.close();
+    return lat_list, lon_list, alt_list;
