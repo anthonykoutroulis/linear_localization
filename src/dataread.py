@@ -58,6 +58,9 @@ def get_sensor_logs():
         if file.endswith(".csv"):
             file_list.append(data_dir + "/" + file);
 
+    longest_time_series = [];
+    temp_time_series = [];
+
     for data_file in file_list:
         # VERSION 2 can cycle through all sensor data files. see krystine for version 2.
         sensor_file = open(data_file, 'r');
@@ -95,9 +98,17 @@ def get_sensor_logs():
                 if int(current_sensor) == MAX_NUM_ANCHORS:
                     # add temp list to good list and clear temp list if full set has been read
                     full_readings_list.append(temp_list);
-                    temp_list = [];
                     expected_sensor_val = 1;
+                    temp_time_series.append(temp_list);
+                    temp_list = [];
             else:
+
+                if (time_sec - time_last) >= MAX_TIMEOUT and len(temp_time_series) > len(longest_time_series):# 50: #
+                    longest_time_series.clear();
+                    longest_time_series = temp_time_series;
+                    #longest_time_series += temp_time_series
+                    temp_time_series = [];
+
                 # clear temp list
                 # set expected sensor back to 1
                 temp_list.clear();
@@ -107,9 +118,20 @@ def get_sensor_logs():
 
         sensor_file.close();
 
+    if len(temp_time_series) > len(longest_time_series):
+        longest_time_series.clear();
+        longest_time_series = temp_time_series;
+        temp_time_series = [];
+
     # test print
     print("Num good sets: " + str(len(full_readings_list)));
-    return full_readings_list;
+    print("Length of longest continuous list of sets: " + str(len(longest_time_series)))
+
+    # use this one to use all of the full sets
+    # return full_readings_list;
+
+    # use this one to choose the longest sequential (in time) series of sets
+    return longest_time_series;
 
 def get_flight_logs():
     # constants
@@ -223,18 +245,18 @@ def get_node_locs():
     LAT_COL = 1;
     LON_COL = 2;
     ALT_COL = 3;
-    
+
     # variables
     lat_list = [];
     lon_list = [];
     alt_list = [];
-    
+
     data_file = os.getcwd() + "/data/nod_locs.csv"
-    
+
     # cycle through all sensor data files
     file = open(data_file, 'r');
     reader = csv.reader(file);
-    
+
     # skip header, TODO add sniffer
     next(reader);
 
