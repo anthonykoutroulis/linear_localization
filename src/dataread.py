@@ -1,5 +1,7 @@
 import csv;
 import os;
+from datetime import datetime;
+from datetime import timedelta;
 
 
 def get_nodes():
@@ -76,6 +78,8 @@ def get_sensor_logs():
 
         for row in sensor_data_reader:
             current_sensor = row[ANCHOR_NODE_COL];
+            
+            
 
             if first_row:
                 temp_time = row[TIME_COL].split(' ')[1]
@@ -87,7 +91,10 @@ def get_sensor_logs():
             temp_time = row[TIME_COL].split(' ')[1]
             temp_time = temp_time.split(":");
             time_sec = int(temp_time[0])*3600 + int(temp_time[1])*60 + float(temp_time[2]);
-
+            
+            dt = datetime.strptime(row[TIME_COL], '%Y-%m-%d %H:%M:%S.%f');
+            row[TIME_COL] = dt;
+            
             # check that it's the expected sensor val and that the time offset is
             # within a constant value
             if int(current_sensor) == expected_sensor_val and (time_sec - time_last) < MAX_TIMEOUT:
@@ -128,17 +135,19 @@ def get_sensor_logs():
     print("Length of longest continuous list of sets: " + str(len(longest_time_series)))
 
     # use this one to use all of the full sets
-    # return full_readings_list;
+    return full_readings_list;
 
     # use this one to choose the longest sequential (in time) series of sets
-    return longest_time_series;
+    #return longest_time_series;
 
 def get_flight_logs():
     # constants
     LAT_COL = 0;
     LON_COL = 1;
     ALT_COL = 2;
+    MS_COL = 6;
     TIME_COL = 7;
+    
 
     # variables
     file_list = [];
@@ -155,28 +164,29 @@ def get_flight_logs():
             file_list.append(data_dir + "/" + file);
 
     smallest_z = 1000000;
-
     for data_file in file_list:
         # cycle through all sensor data files
         sensor_file = open(data_file, 'r');
         sensor_data_reader = csv.reader(sensor_file);
 
-        first_row = True;
+        next(sensor_data_reader);
+                
+        for row in sensor_data_reader:            
+            lat_list.append(float(row[LAT_COL]));
+            lon_list.append(float(row[LON_COL]));
+            dt = datetime.strptime(row[TIME_COL],'%Y/%m/%d %H:%M:%S');
+            #dt -= timedelta(seconds=dt.second);
+            #dt += timedelta(milliseconds=int(row[MS_COL]));
+            td = timedelta(milliseconds=int(row[MS_COL])%1000);
+            dt += td;
+            time_list.append(dt)
 
-        for row in sensor_data_reader:
-            if not first_row:
-                lat_list.append(float(row[LAT_COL]));
-                lon_list.append(float(row[LON_COL]));
-                time_list.append(row[TIME_COL])
+            # convert feet to meters before appending
+            alt_meters = float(row[ALT_COL]) * 0.3048;
+            alt_list.append(alt_meters);
 
-                # convert feet to meters before appending
-                alt_meters = float(row[ALT_COL]) * 0.3048;
-                alt_list.append(alt_meters);
-
-                if alt_meters < smallest_z:
-                    smallest_z = alt_meters;
-            else:
-                first_row = False;
+            if alt_meters < smallest_z:
+                smallest_z = alt_meters;
 
         sensor_file.close();
 
@@ -261,7 +271,6 @@ def get_node_locs():
     next(reader);
 
     for row in reader:
-        print(row);
         lat_list.append(float(row[LAT_COL]));
         lon_list.append(float(row[LON_COL]));
         alt_list.append(float(row[ALT_COL]));

@@ -93,7 +93,7 @@ def get_xls(A,b_,scale=0.000001):
 
 # get xls vector for an entire time series of nodes, ref j
 def get_series_out(nodes,full_readings_list,j):
-    d_ = get_dist_vector(nodes,j);
+    d_ = np.array(get_dist_vector(nodes,j));
     A = get_lmatrix(nodes,j)
 
     output_vector_list = [];
