@@ -65,7 +65,9 @@ nodes = np.array([(i,j,k) for i,j,k in zip(xn,yn,zn)]);
 # get sensor logs and predictions
 sensor_logs = ce240data.get_sensor_logs();
 xyz, t = ce240.get_series_out(nodes, sensor_logs, REF_J);
-r = ce240.get_radii(sensor_logs);
+r = np.array(ce240.get_radii(sensor_logs));
+r -= 750;
+r /= 1000;
 x,y,z = np.hsplit(np.array(xyz),3);
 t = np.array(t)
 
@@ -109,18 +111,20 @@ xls = ce240.get_xls(A_,bb_.transpose(),scale=1);
 dxt = xls[0];
 dyt = xls[1];
 dzt = xls[2];
-xnls = []
-
-for i in range(len(r_)):
-    p = xls.transpose()[i];
-    rad = r_[i];
-    result,_ = optimize.leastsq(func_F, p, args=(nodes,rad));
-    xnls.append(result);
-
-
 dxt = dxt + xn[REF_J];
 dyt = dyt + yn[REF_J];
 dzt = dzt + zn[REF_J];
+## RECONSTRUCTED
+#xls = np.array([(i,j,k) for i,j,k in zip(dxt,dyt,dzt)])
+#xnls = []
+#
+#for i in range(len(r_)):
+#    p = xls[i]
+#    rad = r_[i];
+#    result,_ = optimize.leastsq(func_F, p, args=(nodes,rad));
+#    xnls.append(result);
+#    
+#dxt,dyt,dzt = np.hsplit(np.array(xnls),3);
          
 # determine time breaks 
 break10s = np.argwhere(t[1:] - t[:-1] > datetime.timedelta(seconds = 10));
@@ -145,6 +149,14 @@ x += xn[REF_J];
 y += yn[REF_J];
 z += zn[REF_J];
 
+calcxyz = []
+for i in range(len(r)):
+    p = xyz[i]
+    rad = r[i];
+    result,_ = optimize.leastsq(func_F, p, args=(nodes,rad));
+    calcxyz.append(result);
+    
+x,y,z = np.hsplit(np.array(calcxyz),3);
 # find residuals (5 is experimentally determined consecutive series)
 #samp = np.hstack((x[:5],y[:5],z[:5]));
 #dxt = downsample(np.array(xt),2);
