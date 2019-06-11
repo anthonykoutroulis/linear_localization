@@ -84,7 +84,7 @@ r_ = np.array([
         for t in truth]);
     
 # create and add error
-rand = np.random.rand(1412,8);
+rand = np.random.rand(r_.shape[0],r_.shape[1]);
 r_ += rand;
     
 # compare the min/max of both radii vectors
@@ -149,14 +149,14 @@ x += xn[REF_J];
 y += yn[REF_J];
 z += zn[REF_J];
 
-calcxyz = []
-for i in range(len(r)):
-    p = xyz[i]
-    rad = r[i];
-    result,_ = optimize.leastsq(func_F, p, args=(nodes,rad));
-    calcxyz.append(result);
-    
-x,y,z = np.hsplit(np.array(calcxyz),3);
+#calcxyz = []
+#for i in range(len(r)):
+#    p = xyz[i]
+#    rad = r[i];
+#    result,_ = optimize.leastsq(func_F, p, args=(nodes,rad));
+#    calcxyz.append(result);
+#    
+#x,y,z = np.hsplit(np.array(calcxyz),3);
 # find residuals (5 is experimentally determined consecutive series)
 #samp = np.hstack((x[:5],y[:5],z[:5]));
 #dxt = downsample(np.array(xt),2);
@@ -282,3 +282,15 @@ f5.show();
 #r_peak.append(np.argwhere(r_2[5000:6000] == max(r_2[5000:6000]))[0][0]+5000);
 #
 #tdiff = tt[r_peak] - t[rpeak];
+
+# Create modified csv's
+out_file = open('output/truth_distances.csv', 'w+')
+for i in range(len(xt)):
+    out_file.write(str(xt[i]) + "," + str(yt[i]) + "," + str(zt[i]) + "," + str(tt[i]) + "\n")
+out_file.close();
+
+# Create modified csv's
+out_file = open('output/calc_distances.csv', 'w+')
+for i in range(len(x)):
+    out_file.write(str(x[i][0]) + "," + str(y[i][0]) + "," + str(z[i][0]) + "," + str(t[i]) + "\n")
+out_file.close();
